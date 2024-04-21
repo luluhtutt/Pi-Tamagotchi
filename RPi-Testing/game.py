@@ -17,7 +17,9 @@ TID = 1
 WHITE = (255,255,255)
 
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(17, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(17, GPIO.IN, pull_up_down=GPIO.PUD_UP) # up
+GPIO.setup(22, GPIO.IN, pull_up_down=GPIO.PUD_UP) # down
+GPIO.setup(23, GPIO.IN, pull_up_down=GPIO.PUD_UP) # select
 
 os.putenv('SDL_VIDEODRIVER', 'fbcon')
 os.putenv('SDL_FBDEV', '/dev/fb1')
@@ -96,17 +98,28 @@ times = {0: "12:00 AM", 15: "1:00 AM", 30: "2:00 AM", 45: "3:00 AM", 60: "4:00 A
 120: "8:00 AM", 135: "9:00 AM", 150: "10:00 AM", 165: "11:00 AM", 180: "12:00 PM", 195: "1:00 PM", 210: "2:00 PM", 225: "3:00 PM", 240: "4:00 PM", 
 255: "5:00 PM", 270: "6:00 PM", 285: "7:00 PM", 300: "8:00 PM", 315: "9:00 PM", 330: "10:00 PM", 345: "11:00 PM"}
 
-main_buttons = {'Menu': (40, 30), 'Quit':(40, 70)}
+main_buttons = {'Menu': (20, 20), 'Quit':(20, 60)}
 
-menu_buttons = {'Info': (40, 30), 'Feed': (40,60), 'Sleep': (40, 90), 'Clean': (40, 120), 'Back': (40,150), 'Quit': (40,180)}
+menu_buttons = {'Info': (20, 20), 'Feed': (20,50), 'Sleep': (20, 80), 'Clean': (20, 110), 'Back': (20,140), 'Quit': (20,170)}
 
+# state variables
 time_counter = 0
-
-# state booleans
 playing = True
+current_menu = 'main' # current_menu is either 'main', 'actions', or 'info'
+selection = 0 # selection is the index of the menu item that is currently selected
 
-# current_menu is either 'main', 'actions', or 'info'
-current_menu = 'main'
+def GPIO17_callback(channel):
+    global selection
+    selection = max(selection-1, 0)
+    print("selection value: ", str(selection))
+
+def GPIO22_callback(channel):
+    global selection
+    selection += 1
+    print("selection value: ", str(selection))
+
+GPIO.add_event_detect(17, GPIO.FALLING, callback=GPIO17_callback, bouncetime=300)
+GPIO.add_event_detect(22, GPIO.FALLING, callback=GPIO22_callback, bouncetime=300)
 
 while(playing):
     # printing time
@@ -127,10 +140,18 @@ while(playing):
     if(current_menu == 'main'):
         # main buttons (menu, quit)
         for k,v in main_buttons.items():
-            # pygame.draw.rect(lcd, (0,0,255), pygame.Rect(0, v[0]-20, 120, 40))
             text_surface = font_main_buttons.render('%s'%k, True, WHITE)
-            rect = text_surface.get_rect(center=v) 
+            rect = text_surface.get_rect(topleft=v) 
             lcd.blit(text_surface, rect)
+        pygame.display.update()
+
+        pygame.draw.rect(lcd, (0,0,0), pygame.Rect(0, 0, 18, 200))
+        pygame.display.update()
+
+        location = main_buttons[list(main_buttons.keys())[min(selection, 1)]]
+        text_surface = font_main_buttons.render('>', True, WHITE)
+        rect = text_surface.get_rect(topleft=(location[0]-15, location[1]-3))
+        lcd.blit(text_surface, rect)
         pygame.display.update()
     elif(current_menu == 'actions'):
         pygame.draw.rect(lcd, (0,0,0), pygame.Rect(0, 0, 120, 200))
@@ -138,12 +159,21 @@ while(playing):
         for k,v in menu_buttons.items():
             # pygame.draw.rect(lcd, (0,0,255), pygame.Rect(0, v[0]-20, 120, 40))
             text_surface = font_main_buttons.render('%s'%k, True, WHITE)
-            rect = text_surface.get_rect(center=v) 
+            rect = text_surface.get_rect(topleft=v) 
             lcd.blit(text_surface, rect)
         pygame.display.update()
         
     # status bars
     status_bars()
+
+    # check if select is pressed
+    if ( not GPIO.input(23)):
+        if(current_menu == 'main'):
+            selection = min(selection, 1)
+            if(selection == 0):
+                current_menu = 'actions'
+            else:
+                playing = False
 
     # check for taps
     pitft.update()
@@ -159,7 +189,9 @@ while(playing):
                 elif(x > 50 and x < 90 and y < 80):
                     print("quit pressed")
                     playing = False
-    
+            # elif(current_menu == 'actions'):
+            #     if(y < 80):
+            #         if(x < )
     time.sleep(1)
     time_counter += 1
 
