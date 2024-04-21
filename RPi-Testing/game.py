@@ -34,8 +34,9 @@ lcd = pygame.display.set_mode((width, height))
 lcd.fill((0,0,0))
 pygame.display.update()
 
-font_big = pygame.font.Font(None, 40)
+# font settings
 font_main_buttons = pygame.font.Font(None, 25)
+font_menu_buttons = pygame.font.Font(None, 18)
 font_time = pygame.font.Font(None, 30)
 
 # displaying the tamagotchi
@@ -53,40 +54,60 @@ lcd.blit(tama_im, tama_rect)
 pygame.display.update()
 
 # displaying status bars
-get_health = """ select Health from Relation where UID = """ + str(UID) + """ AND TID = """ + str(TID) + """;"""
-get_happy = """ select Happiness from Relation where UID = """ + str(UID) + """ AND TID = """ + str(TID) + """;"""
-get_hunger = """ select Hunger from Relation where UID = """ + str(UID) + """ AND TID = """ + str(TID) + """;"""
-cursor.execute(get_health)
-health = cursor.fetchone()[0]
-# print("health: ", cursor.fetchone()[0])
-cursor.execute(get_happy)
-happiness = cursor.fetchone()[0]
-# print("happy: ", cursor.fetchone()[0])
-cursor.execute(get_hunger)
-hunger = cursor.fetchone()[0]
 
-pygame.draw.rect(lcd, (255 ,255, 255), pygame.Rect(20, 210, 80, 15))
-pygame.draw.rect(lcd, (0, 255, 0), pygame.Rect(20, 210, 80*(hunger/100), 15))
+def status_bars():
+    cursor.execute(""" select Health from Relation where UID = """ + str(UID) + """ AND TID = """ + str(TID) + """;""")
+    health = cursor.fetchone()[0]
+    cursor.execute(""" select Happiness from Relation where UID = """ + str(UID) + """ AND TID = """ + str(TID) + """;""")
+    happiness = cursor.fetchone()[0]
+    cursor.execute(""" select Hunger from Relation where UID = """ + str(UID) + """ AND TID = """ + str(TID) + """;""")
+    hunger = cursor.fetchone()[0]
 
-pygame.draw.rect(lcd, (255 ,255, 255), pygame.Rect(120, 210, 80, 15))
-pygame.draw.rect(lcd, (90, 100, 180), pygame.Rect(120, 210, 80*(health/100), 15))
+    pygame.draw.rect(lcd, (255 ,255, 255), pygame.Rect(20, 210, 80, 15))
+    pygame.draw.rect(lcd, (0, 255, 0), pygame.Rect(20, 210, 80*(hunger/100), 15))
+    hunger_icon = pygame.image.load("images/hunger_bar.png")
+    hunger_icon = pygame.transform.scale(hunger_icon, (19, 19))
+    hunger_rect = hunger_icon.get_rect()
+    hunger_rect.x = 8
+    hunger_rect.y = 208
+    lcd.blit(hunger_icon, hunger_rect)
 
-pygame.draw.rect(lcd, (255 ,255, 255), pygame.Rect(220, 210, 80, 15))
-pygame.draw.rect(lcd, (100, 255, 210), pygame.Rect(220, 210, 80*(happiness/100), 15))
+    pygame.draw.rect(lcd, (255 ,255, 255), pygame.Rect(120, 210, 80, 15))
+    pygame.draw.rect(lcd, (90, 100, 180), pygame.Rect(120, 210, 80*(health/100), 15))
+    health_icon = pygame.image.load("images/health_bar.png")
+    health_icon = pygame.transform.scale(health_icon, (19, 19))
+    health_rect = health_icon.get_rect()
+    health_rect.x = 108
+    health_rect.y = 208
+    lcd.blit(health_icon, health_rect)
 
-pygame.display.update()
+    pygame.draw.rect(lcd, (255 ,255, 255), pygame.Rect(220, 210, 80, 15))
+    pygame.draw.rect(lcd, (100, 255, 210), pygame.Rect(220, 210, 80*(happiness/100), 15))
+    happy_icon = pygame.image.load("images/happy_bar.png")
+    happy_icon = pygame.transform.scale(happy_icon, (19, 19))
+    happy_rect = happy_icon.get_rect()
+    happy_rect.x = 208
+    happy_rect.y = 208
+    lcd.blit(happy_icon, happy_rect)
+
+    pygame.display.update()
 
 times = {0: "12:00 AM", 15: "1:00 AM", 30: "2:00 AM", 45: "3:00 AM", 60: "4:00 AM", 75: "5:00 AM", 90: "6:00 AM", 105: "7:00 AM",
 120: "8:00 AM", 135: "9:00 AM", 150: "10:00 AM", 165: "11:00 AM", 180: "12:00 PM", 195: "1:00 PM", 210: "2:00 PM", 225: "3:00 PM", 240: "4:00 PM", 
 255: "5:00 PM", 270: "6:00 PM", 285: "7:00 PM", 300: "8:00 PM", 315: "9:00 PM", 330: "10:00 PM", 345: "11:00 PM"}
 
-main_buttons = {'Menu': (40, 20), 'Quit':(40, 50)}
+main_buttons = {'Menu': (40, 30), 'Quit':(40, 70)}
 
-# menu_buttons = {'Info': (0, 0), 'Quit': (0,0): 'Feed': (0,0), ''}
+menu_buttons = {'Info': (40, 30), 'Feed': (40,60), 'Sleep': (40, 90), 'Clean': (40, 120), 'Back': (40,150), 'Quit': (40,180)}
 
 time_counter = 0
 
+# state booleans
 playing = True
+
+# current_menu is either 'main', 'actions', or 'info'
+current_menu = 'main'
+
 while(playing):
     # printing time
     if(time_counter % 15 == 0):
@@ -99,15 +120,45 @@ while(playing):
         lcd.blit(time_surface, time_rect)
         pygame.display.update()
 
+    # loop the counter
     if(time_counter >= 360):
         time_counter = -1
     
-    for k,v in main_buttons.items(): 
+    if(current_menu == 'main'):
+        # main buttons (menu, quit)
+        for k,v in main_buttons.items():
+            # pygame.draw.rect(lcd, (0,0,255), pygame.Rect(0, v[0]-20, 120, 40))
             text_surface = font_main_buttons.render('%s'%k, True, WHITE)
             rect = text_surface.get_rect(center=v) 
             lcd.blit(text_surface, rect)
+        pygame.display.update()
+    elif(current_menu == 'actions'):
+        pygame.draw.rect(lcd, (0,0,0), pygame.Rect(0, 0, 120, 200))
+        pygame.display.update()
+        for k,v in menu_buttons.items():
+            # pygame.draw.rect(lcd, (0,0,255), pygame.Rect(0, v[0]-20, 120, 40))
+            text_surface = font_main_buttons.render('%s'%k, True, WHITE)
+            rect = text_surface.get_rect(center=v) 
+            lcd.blit(text_surface, rect)
+        pygame.display.update()
+        
+    # status bars
+    status_bars()
 
-    pygame.display.update()
+    # check for taps
+    pitft.update()
+    for event in pygame.event.get():
+        if(event.type is MOUSEBUTTONUP):
+            x,y = pygame.mouse.get_pos()
+            if(current_menu == 'main'):
+                # open actions menu
+                if(x < 50 and y < 80):
+                    print("menu opened")
+                    current_menu = 'actions'
+                # quit
+                elif(x > 50 and x < 90 and y < 80):
+                    print("quit pressed")
+                    playing = False
     
     time.sleep(1)
     time_counter += 1
