@@ -36,6 +36,9 @@ lcd = pygame.display.set_mode((width, height))
 lcd.fill((0,0,0))
 pygame.display.update()
 
+# camera = PiCamera() 
+# camera.start_preview()
+
 # font settings
 font_main_buttons = pygame.font.Font(None, 25)
 font_menu_buttons = pygame.font.Font(None, 18)
@@ -99,7 +102,6 @@ times = {0: "12:00 AM", 15: "1:00 AM", 30: "2:00 AM", 45: "3:00 AM", 60: "4:00 A
 255: "5:00 PM", 270: "6:00 PM", 285: "7:00 PM", 300: "8:00 PM", 315: "9:00 PM", 330: "10:00 PM", 345: "11:00 PM"}
 
 main_buttons = {'Menu': (20, 20), 'Quit':(20, 60)}
-
 menu_buttons = {'Info': (20, 20), 'Feed': (20,50), 'Sleep': (20, 80), 'Clean': (20, 110), 'Back': (20,140), 'Quit': (20,170)}
 
 # state variables
