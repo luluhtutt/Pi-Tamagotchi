@@ -6,6 +6,7 @@ import RPi.GPIO as GPIO
 import subprocess
 import picamera
 import cv2 
+import sqlite3
 
 camera = picamera.PiCamera()
 
