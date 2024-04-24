@@ -8,7 +8,7 @@ import sqlite3
  
 start = time.time()
 # connect db
-connection = sqlite3.connect("../tamagotchi.db")
+connection = sqlite3.connect("tamagotchi.db")
 cursor = connection.cursor()
 
 UID = 1
