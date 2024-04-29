@@ -17,10 +17,6 @@ os.putenv('SDL_MOUSEDRV', 'dummy')
 os.putenv('SDL_MOUSEDEV', '/dev/null')
 os.putenv('DISPLAY', '')
 
-connection = sqlite3.connect("user.db")
-
-cursor = connection.cursor()
-
 def capture_image(fp): 
     camera = picamera.PiCamera()
 
@@ -48,38 +44,52 @@ def capture_image(fp):
         rect = text_surface.get_rect(center=v) 
         lcd.blit(text_surface, rect)
 
-    pygame.display.update()
-    click = True 
-    count = 1
-    # Wait for the user to click the button
-    while click: 
+    for i in range(5, 0, -1): 
+        time.sleep(1)
+        pygame.draw.rect(lcd, (0,0,0), pygame.Rect(60, 40, 150, 50))
         pygame.display.update()
-        pitft.update()
-        for event in pygame.event.get(): 
-            if(event.type is MOUSEBUTTONDOWN): 
-                x,y = pygame.mouse.get_pos()  
-                if x > 0 and y > 0: 
-                    print("button press")
-                    for i in range(5, 0, -1): 
-                        time.sleep(1)
-                        pygame.draw.rect(lcd, (0,0,0), pygame.Rect(60, 40, 150, 50))
-                        pygame.display.update()
-                        k = str(i)
-                        text_surface_2 = font_small.render('%s'%k, True, WHITE)
-                        rect_2 = text_surface_2.get_rect(center=(120, 60)) 
-                        lcd.blit(text_surface_2, rect_2)
-                        pygame.display.update() 
-                    count += 1
-                    camera.capture(fp)
-                    camera.stop_preview()
-                    click = False
+        k = str(i)
+        text_surface_2 = font_small.render('%s'%k, True, WHITE)
+        rect_2 = text_surface_2.get_rect(center=(120, 60)) 
+        lcd.blit(text_surface_2, rect_2)
+        pygame.display.update() 
+
+    camera.capture(fp)
+    camera.stop_preview()
+    lcd.fill((0,0,0))
+    pygame.display.update()
+
+    # click = True 
+    # count = 1
+    # # Wait for the user to click the button
+    # while click: 
+    #     pygame.display.update()
+    #     pitft.update()
+    #     for event in pygame.event.get(): 
+    #         if(event.type is MOUSEBUTTONDOWN): 
+    #             x,y = pygame.mouse.get_pos()  
+    #             if x > 0 and y > 0: 
+    #                 print("button press")
+    #                 for i in range(5, 0, -1): 
+    #                     time.sleep(1)
+    #                     pygame.draw.rect(lcd, (0,0,0), pygame.Rect(60, 40, 150, 50))
+    #                     pygame.display.update()
+    #                     k = str(i)
+    #                     text_surface_2 = font_small.render('%s'%k, True, WHITE)
+    #                     rect_2 = text_surface_2.get_rect(center=(120, 60)) 
+    #                     lcd.blit(text_surface_2, rect_2)
+    #                     pygame.display.update() 
+    #                 count += 1
+    #                 camera.capture(fp)
+    #                 camera.stop_preview()
+    #                 click = False
 
     # pygame.quit() 
     # import sys
     # sys.exit(0)
     # del(pitft)
 
-def classify_image():
+def classify_image(cursor):
     capture_image("user_images/test_im.jpg")
     new_face = fr.load_image_file("user_images/test_im.jpg")
     cursor.execute(""" select Uim from User;""")
@@ -91,7 +101,7 @@ def classify_image():
         # print(face[0])
         old_encodings.append(fr.face_encodings(img))
     # print(len(old_encodings))
-    cursor.execute(""" select Name from User;""")
+    cursor.execute(""" select UID from User;""")
     names_list = cursor.fetchall()
     faces_names = [] 
     for names in names_list:
@@ -105,12 +115,12 @@ def classify_image():
     # print(matches)
     # print(best_match)
     name = faces_names[best_match]
-
+    return name 
     print(name)
-    pygame.quit() 
-    import sys
-    sys.exit(0)
-    del(pitft)
+    # pygame.quit() 
+    # import sys
+    # sys.exit(0)
+    # del(pitft)
 
     # new_encoding = fr.face_encodings(new_face)[0]
     # old_encoding = fr.face_encodings(old_face)[0]
@@ -118,8 +128,4 @@ def classify_image():
     # matches = fr.compare_faces(new_encoding, old_encoding)
     # face_distances = fr.face_distance()
 
-classify_image()
-
 # capture_image()
-connection.commit()
-connection.close()

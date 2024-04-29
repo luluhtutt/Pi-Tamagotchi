@@ -46,9 +46,11 @@ for i in range(10):
     add_tamagotchi =  """ INSERT INTO Tamagotchi VALUES ('""" + name + """', """ + str(i) + """, '""" + str(filename) + """')"""
     cursor.execute(add_tamagotchi)
 
-add_user =  """ INSERT INTO User VALUES ('Lulu', 1, 'lulu.png');"""
-add_relation = """ INSERT INTO Relation VALUES (1, 1, 0.5, 90, 80, 70);"""
+add_user =  """ INSERT INTO User VALUES ('Lulu', 1, 'user_images/lulu1.jpg');"""
 cursor.execute(add_user)
+add_user =  """ INSERT INTO User VALUES ('Sana', 2, 'user_images/sana1.jpg');"""
+cursor.execute(add_user)
+add_relation = """ INSERT INTO Relation VALUES (1, 1, 0.5, 90, 80, 70);"""
 cursor.execute(add_relation)
 
 
