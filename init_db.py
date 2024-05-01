@@ -36,23 +36,30 @@ relation_table = """ CREATE TABLE Relation (
 cursor.execute(relation_table)
 
 # create tamagotchis
-images = ["fox.png", "sanaart.png", "zebra.png"]
-names = ["Bob", "Pacmen", "Jaredz"]
+images = ["tama1.png", "tama2.png", "tama3.png", "tama4.png", "tama5.png"]
+names = ["Bob", "Pacmen", "Jaredz", "Capyz", "Kin gJuilan"]
 
-for i in range(10):
-    n = random.randint(0, len(images)-1)
-    filename = images[n]
-    name = names[n]
-    add_tamagotchi =  """ INSERT INTO Tamagotchi VALUES ('""" + name + """', """ + str(i) + """, '""" + str(filename) + """')"""
+for i in range(len(images)):
+    filename = images[i]
+    name = names[i]
+    add_tamagotchi =  """ INSERT INTO Tamagotchi VALUES ('""" + name + """', """ + str(i+1) + """, '""" + str(filename) + """')"""
     cursor.execute(add_tamagotchi)
 
 add_user =  """ INSERT INTO User VALUES ('Lulu', 1, 'user_images/lulu1.jpg');"""
 cursor.execute(add_user)
 add_user =  """ INSERT INTO User VALUES ('Sana', 2, 'user_images/sana1.jpg');"""
 cursor.execute(add_user)
-add_relation = """ INSERT INTO Relation VALUES (1, 1, 0.5, 90, 80, 70);"""
-cursor.execute(add_relation)
+add_user =  """ INSERT INTO User VALUES ('Prakriti', 3, 'user_images/user3.jpg');"""
+cursor.execute(add_user)
+add_user =  """ INSERT INTO User VALUES ('Ananya', 4, 'user_images/user4.jpg');"""
+cursor.execute(add_user)
+add_user =  """ INSERT INTO User VALUES ('TA Michael', 5, 'user_images/user5.jpg');"""
+cursor.execute(add_user)
 
+add_relation = """INSERT INTO Relation VALUES (1, 5, 0, 80, 92, 60); """
+cursor.execute(add_relation)
+add_relation = """INSERT INTO Relation VALUES (1, 1, 0, 100, 10, 50); """
+cursor.execute(add_relation)
 
 connection.commit()
 connection.close()

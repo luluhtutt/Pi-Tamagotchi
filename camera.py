@@ -59,35 +59,6 @@ def capture_image(fp):
     lcd.fill((0,0,0))
     pygame.display.update()
 
-    # click = True 
-    # count = 1
-    # # Wait for the user to click the button
-    # while click: 
-    #     pygame.display.update()
-    #     pitft.update()
-    #     for event in pygame.event.get(): 
-    #         if(event.type is MOUSEBUTTONDOWN): 
-    #             x,y = pygame.mouse.get_pos()  
-    #             if x > 0 and y > 0: 
-    #                 print("button press")
-    #                 for i in range(5, 0, -1): 
-    #                     time.sleep(1)
-    #                     pygame.draw.rect(lcd, (0,0,0), pygame.Rect(60, 40, 150, 50))
-    #                     pygame.display.update()
-    #                     k = str(i)
-    #                     text_surface_2 = font_small.render('%s'%k, True, WHITE)
-    #                     rect_2 = text_surface_2.get_rect(center=(120, 60)) 
-    #                     lcd.blit(text_surface_2, rect_2)
-    #                     pygame.display.update() 
-    #                 count += 1
-    #                 camera.capture(fp)
-    #                 camera.stop_preview()
-    #                 click = False
-
-    # pygame.quit() 
-    # import sys
-    # sys.exit(0)
-    # del(pitft)
 
 def classify_image(cursor):
     capture_image("user_images/test_im.jpg")
@@ -117,15 +88,3 @@ def classify_image(cursor):
     name = faces_names[best_match]
     return name 
     print(name)
-    # pygame.quit() 
-    # import sys
-    # sys.exit(0)
-    # del(pitft)
-
-    # new_encoding = fr.face_encodings(new_face)[0]
-    # old_encoding = fr.face_encodings(old_face)[0]
-
-    # matches = fr.compare_faces(new_encoding, old_encoding)
-    # face_distances = fr.face_distance()
-
-# capture_image()
