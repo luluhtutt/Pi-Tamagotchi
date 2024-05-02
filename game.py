@@ -5,7 +5,7 @@ import time
 import RPi.GPIO as GPIO
 import subprocess
 import sqlite3
-# from camera import * 
+from camera import * 
 import random
 import picamera
 import cv2
@@ -48,7 +48,7 @@ pygame.display.update()
 
 # font settings
 font_main_buttons = pygame.font.Font(None, 25)
-font_action_buttons = pygame.font.Font(None, 18)
+font_action_buttons = pygame.font.Font(None, 20)
 font_time = pygame.font.Font(None, 30)
 font_files = pygame.font.Font(None, 20)
 
@@ -74,17 +74,30 @@ def get_user_data(UID, TID):
     tama_rect.y = 70
 
 
-# displaying status bars
-def status_bars():
+def get_status(): 
+    global UID
+    global TID 
     cursor.execute(""" select Health from Relation where UID = """ + str(UID) + """ AND TID = """ + str(TID) + """;""")
     health = cursor.fetchone()[0]
     cursor.execute(""" select Happiness from Relation where UID = """ + str(UID) + """ AND TID = """ + str(TID) + """;""")
     happiness = cursor.fetchone()[0]
     cursor.execute(""" select Hunger from Relation where UID = """ + str(UID) + """ AND TID = """ + str(TID) + """;""")
     hunger = cursor.fetchone()[0]
+    cursor.execute(""" select Age from Relation where UID = """ + str(UID) + """ AND TID = """ + str(TID) + """;""")
+    age = cursor.fetchone()[0]
+    cursor.execute(""" select Name from Tamagotchi where TID = """ + str(TID) + """;""")
+    name = cursor.fetchone()[0]
+
+    return [name, age, health, hunger, happiness]
+
+
+# displaying status bars
+def status_bars():
+    
+    [_, _, health, hunger, happiness] = get_status()
 
     pygame.draw.rect(lcd, (255 ,255, 255), pygame.Rect(20, 210, 80, 15))
-    pygame.draw.rect(lcd, (0, 255, 0), pygame.Rect(20, 210, 80*(hunger/100), 15))
+    pygame.draw.rect(lcd, (0, 255, 0), pygame.Rect(20, 210, 80*(hunger//100), 15))
     hunger_icon = pygame.image.load("images/hunger_bar.png")
     hunger_icon = pygame.transform.scale(hunger_icon, (19, 19))
     hunger_rect = hunger_icon.get_rect()
@@ -93,7 +106,7 @@ def status_bars():
     lcd.blit(hunger_icon, hunger_rect)
 
     pygame.draw.rect(lcd, (255 ,255, 255), pygame.Rect(120, 210, 80, 15))
-    pygame.draw.rect(lcd, (90, 100, 180), pygame.Rect(120, 210, 80*(health/100), 15))
+    pygame.draw.rect(lcd, (90, 100, 180), pygame.Rect(120, 210, 80*(health//100), 15))
     health_icon = pygame.image.load("images/health_bar.png")
     health_icon = pygame.transform.scale(health_icon, (19, 19))
     health_rect = health_icon.get_rect()
@@ -102,7 +115,7 @@ def status_bars():
     lcd.blit(health_icon, health_rect)
 
     pygame.draw.rect(lcd, (255 ,255, 255), pygame.Rect(220, 210, 80, 15))
-    pygame.draw.rect(lcd, (100, 255, 210), pygame.Rect(220, 210, 80*(happiness/100), 15))
+    pygame.draw.rect(lcd, (100, 255, 210), pygame.Rect(220, 210, 80*(happiness//100), 15))
     happy_icon = pygame.image.load("images/happy_bar.png")
     happy_icon = pygame.transform.scale(happy_icon, (19, 19))
     happy_rect = happy_icon.get_rect()
@@ -111,69 +124,6 @@ def status_bars():
     lcd.blit(happy_icon, happy_rect)
 
     pygame.display.update()
-
-def capture_image(fp):
-
-    lcd.fill((0,0,0))
-    pygame.display.update()
-
-    camera = picamera.PiCamera()
-
-    camera.start_preview()
-    camera.resolution = (640, 480)
-
-    font_cam = pygame.font.Font(None, 30)
-    font_small = pygame.font.Font(None, 30)
-
-    # Create a button to capture the frame
-    capture_button = {"SMILE FOR THE CAMERA:)" : (160, 120)}
-    for k,v in capture_button.items():
-        text_surface = font_cam.render('%s'%k, True, WHITE)
-        rect = text_surface.get_rect(center=v) 
-        lcd.blit(text_surface, rect)
-
-    for i in range(5, 0, -1): 
-        time.sleep(1)
-        pygame.draw.rect(lcd, (0,0,0), pygame.Rect(60, 40, 150, 50))
-        pygame.display.update()
-        k = str(i)
-        text_surface_2 = font_small.render('%s'%k, True, WHITE)
-        rect_2 = text_surface_2.get_rect(center=(120, 60)) 
-        lcd.blit(text_surface_2, rect_2)
-        pygame.display.update() 
-
-    camera.capture(fp)
-    camera.stop_preview()
-    lcd.fill((0,0,0))
-    pygame.display.update()
-
-def classify_image(cursor):
-    capture_image("user_images/test_im.jpg")
-    new_face = fr.load_image_file("user_images/test_im.jpg")
-    cursor.execute(""" select Uim from User;""")
-    # old_face = fr.load_image_file(cursor.fetchall())
-    old_faces = cursor.fetchall()
-    old_encodings = [] 
-    for face in old_faces:
-        img = fr.load_image_file(face[0])
-        # print(face[0])
-        old_encodings.append(fr.face_encodings(img))
-    # print(len(old_encodings))
-    cursor.execute(""" select UID from User;""")
-    names_list = cursor.fetchall()
-    faces_names = [] 
-    for names in names_list:
-            faces_names.append(names[0])
-    # print(len(faces_names))
-    new_encoding = fr.face_encodings(new_face)[0]
-    matches = fr.compare_faces(old_encodings, new_encoding)
-    face_distances = fr.face_distance(old_encodings, new_encoding)
-    face_sums = np.sum(face_distances, axis=1)
-    best_match = np.argmin(face_sums)
-    # print(matches)
-    # print(best_match)
-    name = faces_names[best_match]
-    return name
 
 times = {0: "12:00 AM", 15: "1:00 AM", 30: "2:00 AM", 45: "3:00 AM", 60: "4:00 AM", 75: "5:00 AM", 90: "6:00 AM", 105: "7:00 AM",
 120: "8:00 AM", 135: "9:00 AM", 150: "10:00 AM", 165: "11:00 AM", 180: "12:00 PM", 195: "1:00 PM", 210: "2:00 PM", 225: "3:00 PM", 240: "4:00 PM", 
@@ -184,12 +134,14 @@ main_buttons = {'Menu': (20, 20), 'Quit':(20, 60)}
 action_buttons = {'Info': (20, 20), 'Feed': (20,50), 'Sleep': (20, 80), 'Clean': (20, 110), 'Back': (20,140), 'Quit': (20,170)}
 file_pos = [(20, 10), (20, 58), (20, 106), (20, 154), (20, 202), (180, 10), (180, 58), (180, 106), (180, 154), (180, 202)]
 
+info_info = {'TID': (20, 18), 'Name': (20, 40), 'Age': (20, 62), 'Health': (20, 84), 'Hunger': (20, 106), 'Happiness': (20, 128), 'Back': (20, 150), 'Quit': (20, 172)} 
+
 # state variables
 time_counter = 0
 playing = True
-current_screen = 'file' # current_screen is either 'login', 'file', or 'main'
-current_menu = 'files' # current_menu is either 'main', 'files', 'actions', or 'info'
-selection_max = {'main': 1, 'files': 9, 'actions': 5}
+current_screen = 'main' # current_screen is either 'login', 'file', or 'main'
+current_menu = 'main' # current_menu is either 'main', 'files', 'actions', or 'info'
+selection_max = {'main': 1, 'files': 9, 'actions': 5, 'info': 7}
 selection = 0 # selection is the index of the menu item that is currently selected
 
 def GPIO17_callback(channel):
@@ -216,15 +168,13 @@ GPIO.add_event_detect(27, GPIO.FALLING, callback=GPIO27_callback, bouncetime=300
 while(playing):
     # login screen
     if(current_screen == 'login'):
-        # current_screen = 'file'
-        # current_menu = 'files'
         for k,v in user_login_buttons.items():
             text_surface = font_main_buttons.render('%s'%k, True, WHITE)
             rect = text_surface.get_rect(center=v) 
             lcd.blit(text_surface, rect)
         pygame.display.update()
 
-        # check for taps
+        # returning or new user login
         pitft.update()
         for event in pygame.event.get():
             if(event.type is MOUSEBUTTONUP):
@@ -238,13 +188,14 @@ while(playing):
                     user_name = "User" + str(UID)
                     cursor.execute("""INSERT INTO User VALUES ('""" + user_name + """' ,""" + str(UID) + """, '""" + fp + """');""")
                     connection.commit()
-                    capture_image(fp)
+                    capture_image(fp, lcd)
                     current_screen = 'file'
                     current_menu = 'files'
                     
                 elif(y > 90 and y < 150):
                     print("returning player")
-                    UID = classify_image(cursor)
+                    UID = classify_image(cursor, lcd)
+                    # if UID: 
                     current_screen = 'file'
                     current_menu = 'files'
                     print(UID)
@@ -252,7 +203,8 @@ while(playing):
                 else:
                     print("quit pressed")
                     playing = False
-                
+    
+    # tama selection screen
     elif(current_screen == 'file'):
         lcd.fill((0, 0, 0))
         cursor.execute("""SELECT DISTINCT TID FROM Tamagotchi""")
@@ -307,12 +259,6 @@ while(playing):
             if(cur_tamas[selection] is None):
                 rand_in = random.randint(0, (len(all_tama_tids) - 1))
                 selected_tama = all_tama_tids[rand_in]
-                # UID int NOT NULL,
-                # TID int NOT NULL,
-                # Age float,
-                # Health int,
-                # Hunger int,
-                # Happiness int,
                 add_relation = """INSERT INTO Relation VALUES (""" + str(UID) + """,""" + str(selected_tama) + """, 0, 100, 100, 100);"""
                 cursor.execute(add_relation)
                 connection.commit()
@@ -345,8 +291,9 @@ while(playing):
             time_counter = -1
         
         if(current_menu == 'main'):
+            pygame.draw.rect(lcd, (0,0,0), pygame.Rect(20, 0, 90, 200))
+            pygame.display.update()
             # main buttons (menu, quit)
-
             for k,v in main_buttons.items():
                 text_surface = font_main_buttons.render('%s'%k, True, WHITE)
                 rect = text_surface.get_rect(topleft=v) 
@@ -368,9 +315,52 @@ while(playing):
             rect = text_surface.get_rect(topleft=(location[0]-15, location[1]-3))
             lcd.blit(text_surface, rect)
             pygame.display.update()
+
+            # check if select is pressed
+            if ( not GPIO.input(23)):
+                if(selection == 0):
+                    current_menu = 'actions'
+                else:
+                    playing = False
         
+        elif (current_menu == 'info'): 
+            pygame.draw.rect(lcd, (0,0,0), pygame.Rect(20, 0, 190, 200))
+            # display_tama_files(tama_img_path, 110 , 70, (100, 100))
+            pygame.display.update()
+
+            information = get_status()  
+            information = [TID, ] + information
+            i = 0 
+            for k,v in info_info.items():
+                if i < len(information):
+                    k = k + ": " + str(information[i])
+                    i += 1
+                text_surface = font_action_buttons.render('%s'%k, True, WHITE)
+                rect = text_surface.get_rect(topleft=v) 
+                lcd.blit(text_surface, rect)
+            pygame.display.update()
+
+            pygame.draw.rect(lcd, (0,0,0), pygame.Rect(0, 0, 18, 200))
+            pygame.display.update()
+
+            display_tama_files(tama_img_path, 160 , 70, (100, 100))
+
+            
+            location = info_info[list(info_info.keys())[selection]]
+            text_surface = font_main_buttons.render('>', True, WHITE)
+            rect = text_surface.get_rect(topleft=(location[0]-15, location[1]-3))
+            lcd.blit(text_surface, rect)
+            pygame.display.update()
+
+            if ( not GPIO.input(23)):
+                if(selection == 6):
+                    selection = 0
+                    current_menu = 'actions'
+                elif(selection == 7):
+                    playing = False
+            
         elif(current_menu == 'actions'):
-            pygame.draw.rect(lcd, (0,0,0), pygame.Rect(0, 0, 120, 200))
+            pygame.draw.rect(lcd, (0,0,0), pygame.Rect(20, 0, 90, 200))
             pygame.display.update()
             for k,v in action_buttons.items():
                 # pygame.draw.rect(lcd, (0,0,255), pygame.Rect(0, v[0]-20, 120, 40))
@@ -378,36 +368,34 @@ while(playing):
                 rect = text_surface.get_rect(topleft=v) 
                 lcd.blit(text_surface, rect)
             pygame.display.update()
+
+            pygame.draw.rect(lcd, (0,0,0), pygame.Rect(0, 0, 18, 200))
+            pygame.display.update()
+
+            location = action_buttons[list(action_buttons.keys())[selection]]
+            text_surface = font_main_buttons.render('>', True, WHITE)
+            rect = text_surface.get_rect(topleft=(location[0]-15, location[1]-3))
+            lcd.blit(text_surface, rect)
+            pygame.display.update()
+
+            # check if select is pressed
+            if ( not GPIO.input(23)):
+                if(selection == 0):
+                    selection = 6
+                    current_menu = 'info'
+
+
+                elif(selection == 4):
+                    selection = 0
+                    current_menu = 'main'
+                else:
+                    print("quit pressed")
+                    playing = False
             
         # status bars
         status_bars()
-
-        # check if select is pressed
-        if ( not GPIO.input(23)):
-            if(current_menu == 'main'):
-                if(selection == 0):
-                    current_menu = 'actions'
-                else:
-                    playing = False
-
-        # check for taps
-        # pitft.update()
-        # for event in pygame.event.get():
-        #     if(event.type is MOUSEBUTTONUP):
-        #         x,y = pygame.mouse.get_pos()
-        #         if(current_menu == 'main'):
-        #             # open actions menu
-        #             if(x < 50 and y < 80):
-        #                 print("menu opened")
-        #                 current_menu = 'actions'
-        #             # quit
-        #             elif(x > 50 and x < 90 and y < 80):
-        #                 print("quit pressed")
-        #                 playing = False
-                # elif(current_menu == 'actions'):
-                #     if(y < 80):
-                #         if(x < )
-        time_counter += 0.1
+            
+        time_counter += 0.25
     time.sleep(0.25)
 
 print("loop finished")

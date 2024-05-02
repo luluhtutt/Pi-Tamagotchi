@@ -11,28 +11,16 @@ import dlib as d
 import face_recognition as fr
 import numpy as np 
 
-os.putenv('SDL_VIDEODRIVER', 'fbcon')
-os.putenv('SDL_FBDEV', '/dev/fb1')
-os.putenv('SDL_MOUSEDRV', 'dummy')
-os.putenv('SDL_MOUSEDEV', '/dev/null')
-os.putenv('DISPLAY', '')
 
-def capture_image(fp): 
+def capture_image(fp, lcd):
+    WHITE = (255, 255, 255)
+    lcd.fill((0,0,0))
+    pygame.display.update()
+
     camera = picamera.PiCamera()
 
     camera.start_preview()
     camera.resolution = (640, 480)
-
-    pygame.init() 
-    pygame.mouse.set_visible(False)
-
-    pitft = pigame.PiTft()
-    size = width, height = 320,240
-    lcd = pygame.display.set_mode((width, height))
-    lcd.fill((0,0,0))
-    pygame.display.update()
-
-    WHITE = ((255, 255, 255))
 
     font_cam = pygame.font.Font(None, 30)
     font_small = pygame.font.Font(None, 30)
@@ -59,9 +47,8 @@ def capture_image(fp):
     lcd.fill((0,0,0))
     pygame.display.update()
 
-
-def classify_image(cursor):
-    capture_image("user_images/test_im.jpg")
+def classify_image(cursor, lcd):
+    capture_image("user_images/test_im.jpg", lcd)
     new_face = fr.load_image_file("user_images/test_im.jpg")
     cursor.execute(""" select Uim from User;""")
     # old_face = fr.load_image_file(cursor.fetchall())
@@ -78,13 +65,17 @@ def classify_image(cursor):
     for names in names_list:
             faces_names.append(names[0])
     # print(len(faces_names))
-    new_encoding = fr.face_encodings(new_face)[0]
-    matches = fr.compare_faces(old_encodings, new_encoding)
-    face_distances = fr.face_distance(old_encodings, new_encoding)
-    face_sums = np.sum(face_distances, axis=1)
-    best_match = np.argmin(face_sums)
-    # print(matches)
-    # print(best_match)
-    name = faces_names[best_match]
-    return name 
-    print(name)
+    if (fr.face_encodings(new_face)): 
+        new_encoding = fr.face_encodings(new_face)[0]
+        matches = fr.compare_faces(old_encodings, new_encoding)
+        face_distances = fr.face_distance(old_encodings, new_encoding)
+        face_sums = np.sum(face_distances, axis=1)
+        best_match = np.argmin(face_sums)
+        print(best_match)
+        # print(matches)
+        # print(best_match)
+        name = faces_names[best_match]
+        return name 
+        # print(name)
+    else: 
+        return None

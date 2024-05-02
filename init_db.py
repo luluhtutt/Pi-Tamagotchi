@@ -36,8 +36,8 @@ relation_table = """ CREATE TABLE Relation (
 cursor.execute(relation_table)
 
 # create tamagotchis
-images = ["tama1.png", "tama2.png", "tama3.png", "tama4.png", "tama5.png"]
-names = ["Bob", "Pacmen", "Jaredz", "Capyz", "Kin gJuilan"]
+images = ["tama1.png", "tama2.png", "tama3.png", "tama4.png", "tama5.png", "tama6.png", "tama7.png", "tama8.png", "tama9.png"]
+names = ["Capyz", "Pacmen", "Jaredz", "Bob", "Kin gJuilan", "Jonathon", "Nola", "NYSEG", "Epty"]
 
 for i in range(len(images)):
     filename = images[i]
