@@ -11,6 +11,7 @@ import picamera
 import cv2
 import dlib as d
 import face_recognition as fr
+# from actions import * 
 import numpy as np 
  
 start = time.time()
@@ -64,7 +65,6 @@ def display_tama_files(path, x, y, rescale):
 def get_user_data(UID, TID):
     images_select = """ select * from Relation where TID = """ + str(TID) + """ AND UID = """ + str(UID) +  """ limit 1;"""
     cursor.execute(images_select)
-
     image_path = "images/" + cursor.fetchone()[0]
     tama_im = pygame.image.load(image_path)
     tama_im = pygame.transform.scale(tama_im, (100, 100))
@@ -72,7 +72,6 @@ def get_user_data(UID, TID):
     tama_rect = tama_im.get_rect()
     tama_rect.x = 110
     tama_rect.y = 70
-
 
 def get_status(): 
     global UID
@@ -90,6 +89,14 @@ def get_status():
 
     return [name, age, health, hunger, happiness]
 
+def set_status(age, health, hunger, happiness):
+    global UID
+    global TID
+    cursor.execute(""" UPDATE Relation SET Health = """ + str(health) + """ where UID = """ + str(UID) + """ AND TID = """ + str(TID) + """;""")
+    cursor.execute(""" UPDATE Relation SET Happiness = """ + str(happiness) + """ where UID = """ + str(UID) + """ AND TID = """ + str(TID) + """;""")
+    cursor.execute(""" UPDATE Relation SET Hunger = """ + str(hunger) + """ where UID = """ + str(UID) + """ AND TID = """ + str(TID) + """;""")
+    cursor.execute(""" UPDATE Relation SET Age = """ + str(age) + """ where UID = """ + str(UID) + """ AND TID = """ + str(TID) + """;""")
+    connection.commit()
 
 # displaying status bars
 def status_bars():
@@ -97,7 +104,7 @@ def status_bars():
     [_, _, health, hunger, happiness] = get_status()
 
     pygame.draw.rect(lcd, (255 ,255, 255), pygame.Rect(20, 210, 80, 15))
-    pygame.draw.rect(lcd, (0, 255, 0), pygame.Rect(20, 210, 80*(hunger//100), 15))
+    pygame.draw.rect(lcd, (0, 255, 0), pygame.Rect(20, 210, min(80, 80*(hunger/100)), 15))
     hunger_icon = pygame.image.load("images/hunger_bar.png")
     hunger_icon = pygame.transform.scale(hunger_icon, (19, 19))
     hunger_rect = hunger_icon.get_rect()
@@ -106,7 +113,7 @@ def status_bars():
     lcd.blit(hunger_icon, hunger_rect)
 
     pygame.draw.rect(lcd, (255 ,255, 255), pygame.Rect(120, 210, 80, 15))
-    pygame.draw.rect(lcd, (90, 100, 180), pygame.Rect(120, 210, 80*(health//100), 15))
+    pygame.draw.rect(lcd, (90, 100, 180), pygame.Rect(120, 210, min(80, 80*(health/100)), 15))
     health_icon = pygame.image.load("images/health_bar.png")
     health_icon = pygame.transform.scale(health_icon, (19, 19))
     health_rect = health_icon.get_rect()
@@ -115,7 +122,7 @@ def status_bars():
     lcd.blit(health_icon, health_rect)
 
     pygame.draw.rect(lcd, (255 ,255, 255), pygame.Rect(220, 210, 80, 15))
-    pygame.draw.rect(lcd, (100, 255, 210), pygame.Rect(220, 210, 80*(happiness//100), 15))
+    pygame.draw.rect(lcd, (100, 255, 210), pygame.Rect(220, 210, min(80, 80*(happiness/100)), 15))
     happy_icon = pygame.image.load("images/happy_bar.png")
     happy_icon = pygame.transform.scale(happy_icon, (19, 19))
     happy_rect = happy_icon.get_rect()
@@ -124,6 +131,51 @@ def status_bars():
     lcd.blit(happy_icon, happy_rect)
 
     pygame.display.update()
+
+def feed(cursor, lcd, img_path):
+    [_, age, health, hunger, happiness] = get_status()
+    set_status(age, health, 0, happiness)
+    global playing
+    global tama_x
+    global tama_y
+    start_time = time.time() 
+    end_time = start_time + 30 
+    food_x = random.randint(10, 290)
+    food_y = 0
+
+    while playing and time.time() < end_time:
+        # displaying the tama
+        pygame.draw.rect(lcd, (0 ,0, 0), pygame.Rect(tama_x-20, tama_y, 100, 60))
+        pygame.display.update()
+        display_tama_files(img_path, tama_x, tama_y, (60, 60))
+        pygame.display.update()
+
+        # displaying the food
+        pygame.draw.rect(lcd, (0 ,0, 0), pygame.Rect(food_x, food_y-3, 30, 36))
+        pygame.display.update()
+        display_tama_files("images/hunger_bar.png", food_x, food_y, (30, 30))
+        pygame.display.update()
+        food_y += 3
+
+        if(food_y > 150):
+            pygame.draw.rect(lcd, (0 ,0, 0), pygame.Rect(food_x, food_y-3, 30, 36))
+            food_y = 0
+            food_x = random.randint(10, 290)
+            
+        if(abs(food_x - tama_x) < 35 and abs(food_y - tama_y) < 35):
+            print("ate!")
+            pygame.draw.rect(lcd, (0 ,0, 0), pygame.Rect(food_x, food_y-3, 30, 36))
+            food_y = 0
+            food_x = random.randint(10, 310)
+            [_, age, health, hunger, happiness] = get_status()
+            set_status(age, health, int(hunger)+10, happiness)
+            status_bars()
+        time.sleep(0.1)
+    pygame.draw.rect(lcd, (0 ,0, 0), pygame.Rect(food_x, food_y-3, 30, 36))
+    pygame.draw.rect(lcd, (0 ,0, 0), pygame.Rect(tama_x-20, tama_y, 100, 60))
+    pygame.display.update()
+
+    return
 
 times = {0: "12:00 AM", 15: "1:00 AM", 30: "2:00 AM", 45: "3:00 AM", 60: "4:00 AM", 75: "5:00 AM", 90: "6:00 AM", 105: "7:00 AM",
 120: "8:00 AM", 135: "9:00 AM", 150: "10:00 AM", 165: "11:00 AM", 180: "12:00 PM", 195: "1:00 PM", 210: "2:00 PM", 225: "3:00 PM", 240: "4:00 PM", 
@@ -139,22 +191,38 @@ info_info = {'TID': (20, 18), 'Name': (20, 40), 'Age': (20, 62), 'Health': (20, 
 # state variables
 time_counter = 0
 playing = True
-current_screen = 'main' # current_screen is either 'login', 'file', or 'main'
+current_screen = 'login' # current_screen is either 'login', 'file', or 'main'
 current_menu = 'main' # current_menu is either 'main', 'files', 'actions', or 'info'
 selection_max = {'main': 1, 'files': 9, 'actions': 5, 'info': 7}
 selection = 0 # selection is the index of the menu item that is currently selected
+action = False
+tama_x = 110
+tama_y = 120
 
 def GPIO17_callback(channel):
-    global selection
-    selection = max(selection-1, 0)
-    print("selection value: ", str(selection))
+    global action
+    print("action; ", action)
+    if(action):
+        print("left!")
+        global tama_x
+        tama_x = max(0, tama_x-20)
+    else:
+        global selection
+        selection = max(selection-1, 0)
+        print("selection value: ", str(selection))
 
 def GPIO22_callback(channel):
-    global selection
-    global selection_max
-    selection = min(selection+1, selection_max[current_menu])
-    # selection+=1
-    print("selection value: ", str(selection))
+    global action
+    print("action; ", action)
+    if(action):
+        print("right!")
+        global tama_x
+        tama_x = min(320, tama_x+20)
+    else:
+        global selection
+        global selection_max
+        selection = min(selection+1, selection_max[current_menu])
+        print("selection value: ", str(selection))
     
 def GPIO27_callback(channel):
     print("quit pressed")
@@ -290,6 +358,19 @@ while(playing):
         if(time_counter >= 360):
             time_counter = -1
         
+        pygame.draw.rect(lcd, (0,0,0), pygame.Rect(110, 50, 210, 150))
+        pygame.display.update()
+
+        cursor.execute("""SELECT * FROM Tamagotchi WHERE TID=""" + str(TID))
+        tamas_info = cursor.fetchone()
+        # print(tamas_info)
+        tama_img_path = "images/" + str(tamas_info[2])
+
+        display_tama_files(tama_img_path, 110 , 70, (100, 100))
+
+        pygame.draw.rect(lcd, (0,0,0), pygame.Rect(0, 0, 18, 200))
+        pygame.display.update()
+        
         if(current_menu == 'main'):
             pygame.draw.rect(lcd, (0,0,0), pygame.Rect(20, 0, 90, 200))
             pygame.display.update()
@@ -298,16 +379,6 @@ while(playing):
                 text_surface = font_main_buttons.render('%s'%k, True, WHITE)
                 rect = text_surface.get_rect(topleft=v) 
                 lcd.blit(text_surface, rect)
-            pygame.display.update()
-            
-            cursor.execute("""SELECT * FROM Tamagotchi WHERE TID=""" + str(TID))
-            tamas_info = cursor.fetchone()
-            # print(tamas_info)
-            tama_img_path = "images/" + str(tamas_info[2])
-
-            display_tama_files(tama_img_path, 110 , 70, (100, 100))
-
-            pygame.draw.rect(lcd, (0,0,0), pygame.Rect(0, 0, 18, 200))
             pygame.display.update()
 
             location = main_buttons[list(main_buttons.keys())[selection]]
@@ -356,6 +427,7 @@ while(playing):
                 if(selection == 6):
                     selection = 0
                     current_menu = 'actions'
+                    pygame.draw.rect(lcd, (0,0,0), pygame.Rect(0, 0, 210, 200))
                 elif(selection == 7):
                     playing = False
             
@@ -383,8 +455,20 @@ while(playing):
                 if(selection == 0):
                     selection = 6
                     current_menu = 'info'
-
-
+                elif(selection == 1): # feed
+                    action = True
+                    pygame.draw.rect(lcd, (0,0,0), pygame.Rect(0, 0, 320, 200))
+                    pygame.display.update()
+                    feed(cursor, lcd, tama_img_path)
+                    selection = 0
+                    current_menu = 'actions'
+                    action = False
+                elif(selection == 2):
+                    selection = 0
+                    sleep(cursor, lcd)
+                elif(selection == 3):
+                    selection = 0
+                    clean(cursor, lcd)
                 elif(selection == 4):
                     selection = 0
                     current_menu = 'main'
@@ -405,3 +489,4 @@ connection.close()
 # import sys
 # sys.exit(0)
 # del(pitft)
+
