@@ -58,8 +58,10 @@ def display_tama_files(path, x, y, rescale):
     tama_im = pygame.image.load(path)
     tama_icon = pygame.transform.scale(tama_im, rescale)
     tama_rect_icon = tama_icon.get_rect()
-    tama_rect_icon.x = x
-    tama_rect_icon.y = y
+    # print("x: ", x)
+    # print("type x: ", type(x))
+    tama_rect_icon.x = int(x)
+    tama_rect_icon.y = int(y)
     lcd.blit(tama_icon, tama_rect_icon)
 
 def get_user_data(UID, TID):
@@ -177,6 +179,49 @@ def feed(cursor, lcd, img_path):
 
     return
 
+def clean(cursor, lcd):
+    print("clean called")
+    [_, age, health, hunger, happiness] = get_status()
+    set_status(age, health, 0, happiness)
+    global poops
+    print("poops: ")
+    indices = []
+    for p in poops:
+            # print("p: ", p)
+            # print("p[0]: ", p[0])
+            # print("p[1]: ", p[1])
+            # print("p[2]: ", p[2])
+            display_tama_files(p[0], p[1], p[2], (20, 20))
+            pygame.display.update()
+    while (np.shape(poops)[0]) != 0: 
+        # print("poop size: ", np.shape(poops)[0])
+        pitft.update()
+        for event in pygame.event.get():
+            [_, age, health, hunger, happiness] = get_status()
+            if(event.type is MOUSEBUTTONDOWN): 
+                print("tap detected")
+                x,y = pygame.mouse.get_pos()
+                print("x: ", x)
+                print("y: ", y)
+                print("poops to check x and y: ", poops[:, 1:])
+                indices = np.where(np.any(np.any(np.abs(poops[:,1].astype(int) - x) < 70) & np.any(np.abs(poops[:,2].astype(int) - y) < 70)))
+                print("indices if ", indices)
+
+                if(np.shape(indices)[0] != 0):
+                    print("indices shape: ", np.shape(indices)[0])
+                    print("indices else ", indices)
+                    print("poops else ", poops)
+                    for i in indices: 
+                        p = poops[i] 
+                        print("p: ", p)
+                        pygame.draw.rect(lcd, (0,0,0), pygame.Rect(int(p[0][1]), int(p[0][2]), 20, 20))
+                        pygame.display.update()
+                        poops = np.delete(poops, i)
+                    indices = []
+                    set_status(age, health + np.shape(indices)[0]*5, hunger, happiness)
+                    
+    return
+
 times = {0: "12:00 AM", 15: "1:00 AM", 30: "2:00 AM", 45: "3:00 AM", 60: "4:00 AM", 75: "5:00 AM", 90: "6:00 AM", 105: "7:00 AM",
 120: "8:00 AM", 135: "9:00 AM", 150: "10:00 AM", 165: "11:00 AM", 180: "12:00 PM", 195: "1:00 PM", 210: "2:00 PM", 225: "3:00 PM", 240: "4:00 PM", 
 255: "5:00 PM", 270: "6:00 PM", 285: "7:00 PM", 300: "8:00 PM", 315: "9:00 PM", 330: "10:00 PM", 345: "11:00 PM"}
@@ -191,13 +236,14 @@ info_info = {'TID': (20, 18), 'Name': (20, 40), 'Age': (20, 62), 'Health': (20, 
 # state variables
 time_counter = 0
 playing = True
-current_screen = 'login' # current_screen is either 'login', 'file', or 'main'
+current_screen = 'main' # current_screen is either 'login', 'file', or 'main'
 current_menu = 'main' # current_menu is either 'main', 'files', 'actions', or 'info'
 selection_max = {'main': 1, 'files': 9, 'actions': 5, 'info': 7}
 selection = 0 # selection is the index of the menu item that is currently selected
 action = False
 tama_x = 110
 tama_y = 120
+poops = np.array([])
 
 def GPIO17_callback(channel):
     global action
@@ -342,8 +388,8 @@ while(playing):
 
     # main screen
     elif(current_screen == 'main'):
+
         # printing time
-        
         if(time_counter % 15 == 0):
             pygame.draw.rect(lcd, (0,0,0), pygame.Rect(200, 10, 120, 30))
             pygame.display.update()
@@ -354,10 +400,25 @@ while(playing):
             lcd.blit(time_surface, time_rect)
             pygame.display.update()
 
+        if(time_counter % 15 == 7):
+            # add a poop every hour
+            poop_index = random.randint(1,2)
+            poop_x = random.randint(10, 290)
+            poop_y = random.randint(170, 190)
+            if(poops.shape[0] == 0):
+                poops = np.array([["images/poop" + str(poop_index) + ".png", int(poop_x), int(poop_y)]])
+            else:
+                poops = np.append(poops, [["images/poop" + str(poop_index) + ".png", int(poop_x), int(poop_y)]], axis=0)
+            # print("poops: ", poops)
+            [name, age, health, hunger, happiness] = get_status()
+            new_health = max(0, health - np.shape(poops)[0] * 5)
+            set_status(age, new_health, hunger, happiness)
+
         # loop the counter
         if(time_counter >= 360):
             time_counter = -1
         
+        # black rect to remove actions
         pygame.draw.rect(lcd, (0,0,0), pygame.Rect(110, 50, 210, 150))
         pygame.display.update()
 
@@ -368,6 +429,7 @@ while(playing):
 
         display_tama_files(tama_img_path, 110 , 70, (100, 100))
 
+        # black for menu 
         pygame.draw.rect(lcd, (0,0,0), pygame.Rect(0, 0, 18, 200))
         pygame.display.update()
         
@@ -463,22 +525,32 @@ while(playing):
                     selection = 0
                     current_menu = 'actions'
                     action = False
-                elif(selection == 2):
+                elif(selection == 2): # sleep
                     selection = 0
                     sleep(cursor, lcd)
-                elif(selection == 3):
-                    selection = 0
+                elif(selection == 3): # clean
                     clean(cursor, lcd)
+                    selection = 0
                 elif(selection == 4):
                     selection = 0
                     current_menu = 'main'
                 else:
                     print("quit pressed")
                     playing = False
-            
+        
+        for p in poops:
+            # print("p: ", p)
+            # print("p[0]: ", p[0])
+            # print("p[1]: ", p[1])
+            # print("p[2]: ", p[2])
+            display_tama_files(p[0], p[1], p[2], (20, 20))
+            pygame.display.update()
+
         # status bars
         status_bars()
-            
+
+        
+
         time_counter += 0.25
     time.sleep(0.25)
 
