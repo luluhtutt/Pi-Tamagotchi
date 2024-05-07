@@ -404,7 +404,6 @@ while(playing):
 
     # main screen
     elif(current_screen == 'main'):
-
         # printing time
         if(time_counter % 15 == 0):
             pygame.draw.rect(lcd, (0,0,0), pygame.Rect(200, 10, 120, 30))
@@ -597,8 +596,22 @@ while(playing):
         # status bars
         status_bars()
 
-        
+        # check if dead
+        [name, age, health, hunger, happiness] = get_status()
+        if(health == 0):
+            current_screen = 'death'
+
         time_counter += 0.25
+
+    # death screen    
+    elif(current_screen == 'death'):
+        lcd.fill((0,0,0))
+        display_tama_files("images/tombstone.png", 110, 70, (120, 160))
+        cursor.execute(""" DELETE from Relation where TID = """ + str(TID) + """ AND UID = """ + str(UID) +  """;""")
+        connection.commit()
+        pygame.display.update()
+
+    
     time.sleep(0.25)
 
 print("loop finished")
