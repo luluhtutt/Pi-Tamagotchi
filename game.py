@@ -234,19 +234,19 @@ times = {0: "12:00 AM", 15: "1:00 AM", 30: "2:00 AM", 45: "3:00 AM", 60: "4:00 A
 120: "8:00 AM", 135: "9:00 AM", 150: "10:00 AM", 165: "11:00 AM", 180: "12:00 PM", 195: "1:00 PM", 210: "2:00 PM", 225: "3:00 PM", 240: "4:00 PM", 
 255: "5:00 PM", 270: "6:00 PM", 285: "7:00 PM", 300: "8:00 PM", 315: "9:00 PM", 330: "10:00 PM", 345: "11:00 PM"}
 
-user_login_buttons = {'New Player': (160, 60), 'Returning Player': (160, 120), 'Quit': (160, 180)}
+user_login_buttons = {'New Player': (100, 60), 'Returning Player': (100, 120), 'Quit': (100, 180)}
 main_buttons = {'Menu': (20, 20), 'Quit':(20, 60)}
 action_buttons = {'Info': (20, 20), 'Feed': (20,50), 'Sleep': (20, 80), 'Clean': (20, 110), 'Back': (20,140), 'Quit': (20,170)}
 file_pos = [(20, 10), (20, 58), (20, 106), (20, 154), (20, 202), (180, 10), (180, 58), (180, 106), (180, 154), (180, 202)]
-
+death_buttons = {'Tamagotchis': (20,80), 'Quit': (20, 160)}
 info_info = {'TID': (20, 18), 'Name': (20, 40), 'Age': (20, 62), 'Health': (20, 84), 'Hunger': (20, 106), 'Happiness': (20, 128), 'Back': (20, 150), 'Quit': (20, 172)} 
 
 # state variables
 time_counter = 0
 playing = True
 current_screen = 'login' # current_screen is either 'login', 'file', or 'main' or 'death'
-current_menu = 'main' # current_menu is either 'main', 'files', 'actions', or 'info'
-selection_max = {'main': 1, 'files': 9, 'actions': 5, 'info': 7}
+current_menu = 'login' # current_menu is either 'login', 'main', 'files', 'actions', 'info', or 'death'
+selection_max = {'login': 2, 'main': 1, 'files': 9, 'actions': 5, 'info': 7, 'death': 1}
 selection = 0 # selection is the index of the menu item that is currently selected
 action = False
 tama_x = 110
@@ -300,39 +300,45 @@ while(playing):
     if(current_screen == 'login'):
         for k,v in user_login_buttons.items():
             text_surface = font_main_buttons.render('%s'%k, True, WHITE)
-            rect = text_surface.get_rect(center=v) 
+            rect = text_surface.get_rect(topleft=v) 
             lcd.blit(text_surface, rect)
         pygame.display.update()
 
-        # returning or new user login
-        pitft.update()
-        for event in pygame.event.get():
-            if(event.type is MOUSEBUTTONUP):
-                x,y = pygame.mouse.get_pos()
-                if(y < 90):
-                    print("new player")
-                    cursor.execute(""" SELECT COUNT(*) FROM User""")
-                    UID = cursor.fetchone()[0] + 1
-                    print("UID: ", UID)
-                    fp = "user_images/user" + str(UID) + ".jpg"
-                    user_name = "User" + str(UID)
-                    cursor.execute("""INSERT INTO User VALUES ('""" + user_name + """' ,""" + str(UID) + """, '""" + fp + """');""")
-                    connection.commit()
-                    capture_image(fp, lcd)
-                    current_screen = 'file'
-                    current_menu = 'files'
-                    
-                elif(y > 90 and y < 150):
-                    print("returning player")
-                    UID = classify_image(cursor, lcd)
-                    # if UID: 
-                    current_screen = 'file'
-                    current_menu = 'files'
-                    print(UID)
+        pygame.draw.rect(lcd, (0,0,0), pygame.Rect(80, 0, 18, 200))
+        pygame.display.update()
 
-                else:
-                    print("quit pressed")
-                    playing = False
+        # login menu selection arrow
+        location = user_login_buttons[list(user_login_buttons.keys())[selection]]
+        text_surface = font_main_buttons.render('>', True, WHITE)
+        rect = text_surface.get_rect(topleft=(location[0]-15, location[1]-3))
+        lcd.blit(text_surface, rect)
+        pygame.display.update()
+
+        if ( not GPIO.input(23)):
+            if(selection == 0): # new player
+                print("new player")
+                cursor.execute(""" SELECT COUNT(*) FROM User""")
+                UID = cursor.fetchone()[0] + 1
+                print("UID: ", UID)
+                fp = "user_images/user" + str(UID) + ".jpg"
+                user_name = "User" + str(UID)
+                cursor.execute("""INSERT INTO User VALUES ('""" + user_name + """' ,""" + str(UID) + """, '""" + fp + """');""")
+                connection.commit()
+                capture_image(fp, lcd)
+                selection = 0
+                current_screen = 'file'
+                current_menu = 'files'
+            elif(selection == 1): # returning player
+                selection = 0
+                print("returning player")
+                UID = classify_image(cursor, lcd)
+                # if UID: 
+                current_screen = 'file'
+                current_menu = 'files'
+                print(UID)
+            else:
+                print("quit pressed")
+                playing = False
     
     # tama selection screen
     elif(current_screen == 'file'):
@@ -406,6 +412,7 @@ while(playing):
     elif(current_screen == 'main'):
         # printing time
         if(time_counter % 15 == 0):
+
             pygame.draw.rect(lcd, (0,0,0), pygame.Rect(200, 10, 120, 30))
             pygame.display.update()
 
@@ -447,10 +454,6 @@ while(playing):
                     happiness *= 0.9
                 set_status(age, health, hunger, happiness)
 
-        # increment age
-        [name, age, health, hunger, happiness] = get_status()
-        set_status(age+0.25, health, hunger, happiness)
-
         # if happiness is low, decrease health
         [name, age, health, hunger, happiness] = get_status()
         if(happiness < 5):
@@ -458,6 +461,9 @@ while(playing):
 
         # loop the time counter
         if(time_counter >= 359):
+            # increment age
+            [name, age, health, hunger, happiness] = get_status()
+            set_status(age+1, health, hunger, happiness)
             time_counter = -1
         
         # black rect to remove actions
@@ -600,16 +606,45 @@ while(playing):
         [name, age, health, hunger, happiness] = get_status()
         if(health == 0):
             current_screen = 'death'
+            current_menu = 'death'
 
         time_counter += 0.25
 
     # death screen    
     elif(current_screen == 'death'):
         lcd.fill((0,0,0))
-        display_tama_files("images/tombstone.png", 110, 70, (120, 160))
+        display_tama_files("images/tombstone.png", 180, 70, (120, 160))
+
+        for k,v in death_buttons.items():
+            # pygame.draw.rect(lcd, (0,0,255), pygame.Rect(0, v[0]-20, 120, 40))
+            text_surface = font_main_buttons.render('%s'%k, True, WHITE)
+            rect = text_surface.get_rect(topleft=v) 
+            lcd.blit(text_surface, rect)
+        pygame.display.update()
+
+        pygame.draw.rect(lcd, (0,0,0), pygame.Rect(0, 0, 18, 200))
+        pygame.display.update()
+
+        # death menu selection arrow
+        location = death_buttons[list(death_buttons.keys())[selection]]
+        text_surface = font_main_buttons.render('>', True, WHITE)
+        rect = text_surface.get_rect(topleft=(location[0]-15, location[1]-3))
+        lcd.blit(text_surface, rect)
+        pygame.display.update()
+
         cursor.execute(""" DELETE from Relation where TID = """ + str(TID) + """ AND UID = """ + str(UID) +  """;""")
         connection.commit()
         pygame.display.update()
+
+        if ( not GPIO.input(23)):
+            if(selection == 0): # files
+                lcd.fill((0,0,0))
+                selection = 0
+                current_screen = 'file'
+                current_menu = 'files'
+            else:
+                print("quit pressed")
+                playing = False
 
     
     time.sleep(0.25)
