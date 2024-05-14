@@ -96,10 +96,10 @@ def set_status(age, health, hunger, happiness):
     global TID
     global connection
     global cursor
-    cursor.execute(""" UPDATE Relation SET Health = """ + str(health) + """ where UID = """ + str(UID) + """ AND TID = """ + str(TID) + """;""")
-    cursor.execute(""" UPDATE Relation SET Happiness = """ + str(happiness) + """ where UID = """ + str(UID) + """ AND TID = """ + str(TID) + """;""")
-    cursor.execute(""" UPDATE Relation SET Hunger = """ + str(hunger) + """ where UID = """ + str(UID) + """ AND TID = """ + str(TID) + """;""")
-    cursor.execute(""" UPDATE Relation SET Age = """ + str(age) + """ where UID = """ + str(UID) + """ AND TID = """ + str(TID) + """;""")
+    cursor.execute(""" UPDATE Relation SET Health = """ + str(round(health, 2)) + """ where UID = """ + str(UID) + """ AND TID = """ + str(TID) + """;""")
+    cursor.execute(""" UPDATE Relation SET Happiness = """ + str(round(happiness, 2)) + """ where UID = """ + str(UID) + """ AND TID = """ + str(TID) + """;""")
+    cursor.execute(""" UPDATE Relation SET Hunger = """ + str(round(hunger, 2)) + """ where UID = """ + str(UID) + """ AND TID = """ + str(TID) + """;""")
+    cursor.execute(""" UPDATE Relation SET Age = """ + str(round(age, 2)) + """ where UID = """ + str(UID) + """ AND TID = """ + str(TID) + """;""")
     connection.commit()
     return
 
@@ -235,10 +235,10 @@ times = {0: "12:00 AM", 15: "1:00 AM", 30: "2:00 AM", 45: "3:00 AM", 60: "4:00 A
 255: "5:00 PM", 270: "6:00 PM", 285: "7:00 PM", 300: "8:00 PM", 315: "9:00 PM", 330: "10:00 PM", 345: "11:00 PM"}
 
 user_login_buttons = {'New Player': (100, 60), 'Returning Player': (100, 120), 'Quit': (100, 180)}
-main_buttons = {'Menu': (20, 20), 'Quit':(20, 60)}
-action_buttons = {'Info': (20, 20), 'Feed': (20,50), 'Sleep': (20, 80), 'Clean': (20, 110), 'Back': (20,140), 'Quit': (20,170)}
+main_buttons = {'Menu': (20, 20), 'Back': (20, 60), 'Quit':(20, 100)}
+action_buttons = {'Info': (20, 20), 'Feed': (20,50), 'Interact': (20, 80), 'Clean': (20, 110), 'Back': (20,140), 'Quit': (20,170)}
 file_pos = [(20, 10), (20, 58), (20, 106), (20, 154), (20, 202), (180, 10), (180, 58), (180, 106), (180, 154), (180, 202)]
-death_buttons = {'Tamagotchis': (20,80), 'Quit': (20, 160)}
+death_buttons = {'Login': (20, 60), 'Tamagotchis': (20,120), 'Quit': (20, 180)}
 info_info = {'TID': (20, 18), 'Name': (20, 40), 'Age': (20, 62), 'Health': (20, 84), 'Hunger': (20, 106), 'Happiness': (20, 128), 'Back': (20, 150), 'Quit': (20, 172)} 
 
 # state variables
@@ -246,7 +246,7 @@ time_counter = 0
 playing = True
 current_screen = 'login' # current_screen is either 'login', 'file', or 'main' or 'death'
 current_menu = 'login' # current_menu is either 'login', 'main', 'files', 'actions', 'info', or 'death'
-selection_max = {'login': 2, 'main': 1, 'files': 9, 'actions': 5, 'info': 7, 'death': 1}
+selection_max = {'login': 2, 'main': 2, 'files': 9, 'actions': 5, 'info': 7, 'death': 2}
 selection = 0 # selection is the index of the menu item that is currently selected
 action = False
 tama_x = 110
@@ -412,6 +412,9 @@ while(playing):
     elif(current_screen == 'main'):
         # printing time
         if(time_counter % 15 == 0):
+            # increment age
+            [name, age, health, hunger, happiness] = get_status()
+            set_status(age+1./24, health, hunger, happiness)
 
             pygame.draw.rect(lcd, (0,0,0), pygame.Rect(200, 10, 120, 30))
             pygame.display.update()
@@ -461,9 +464,6 @@ while(playing):
 
         # loop the time counter
         if(time_counter >= 359):
-            # increment age
-            [name, age, health, hunger, happiness] = get_status()
-            set_status(age+1, health, hunger, happiness)
             time_counter = -1
         
         # black rect to remove actions
@@ -503,6 +503,11 @@ while(playing):
             if ( not GPIO.input(23)):
                 if(selection == 0):
                     current_menu = 'actions'
+                elif(selection == 1):
+                    selection = 0
+                    time_counter = 0
+                    current_screen = 'file'
+                    current_menu = 'files'
                 else:
                     playing = False
         
@@ -579,9 +584,15 @@ while(playing):
                     selection = 0
                     current_menu = 'actions'
                     action = False
-                elif(selection == 2): # sleep
+                elif(selection == 2): # interact
                     selection = 0
-                    sleep(cursor, lcd)
+                    temp_UID = classify_image(cursor, lcd)
+                    [name, age, health, hunger, happiness] = get_status()
+                    if(temp_UID == UID):
+                        happiness = min(happiness*1.2, 100)
+                    else:
+                        happiness = max(happiness*0.8, 0)
+                    set_status(age, health, hunger, happiness)
                 elif(selection == 3): # clean
                     pygame.draw.rect(lcd, (0,0,0), pygame.Rect(0, 0, 110, 200))
                     pygame.display.update()
@@ -605,6 +616,8 @@ while(playing):
         # check if dead
         [name, age, health, hunger, happiness] = get_status()
         if(health == 0):
+            cursor.execute(""" DELETE from Relation where TID = """ + str(TID) + """ AND UID = """ + str(UID) +  """;""")
+            connection.commit()
             current_screen = 'death'
             current_menu = 'death'
 
@@ -614,6 +627,10 @@ while(playing):
     elif(current_screen == 'death'):
         lcd.fill((0,0,0))
         display_tama_files("images/tombstone.png", 180, 70, (120, 160))
+
+        text_surface = font_main_buttons.render('GAME OVER', True, WHITE)
+        rect = text_surface.get_rect(center = (160, 20))
+        lcd.blit(text_surface, rect)
 
         for k,v in death_buttons.items():
             # pygame.draw.rect(lcd, (0,0,255), pygame.Rect(0, v[0]-20, 120, 40))
@@ -632,12 +649,15 @@ while(playing):
         lcd.blit(text_surface, rect)
         pygame.display.update()
 
-        cursor.execute(""" DELETE from Relation where TID = """ + str(TID) + """ AND UID = """ + str(UID) +  """;""")
-        connection.commit()
         pygame.display.update()
 
         if ( not GPIO.input(23)):
-            if(selection == 0): # files
+            if(selection == 0): # login
+                lcd.fill((0,0,0))
+                selection = 0
+                current_screen = 'login'
+                current_menu = 'login'
+            elif(selection == 1): # files
                 lcd.fill((0,0,0))
                 selection = 0
                 current_screen = 'file'

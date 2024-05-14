@@ -19,8 +19,12 @@ def set_happiness(uid, new_hunger):
     SET Hunger = """ + str(new_hunger) + """
     WHERE Id = """ + str(uid)
 
-data = cursor.execute("""SELECT * FROM Tamagotchi""")
+cursor.execute(""" DELETE from User where UID = """ + str(7) + """;""")
+connection.commit()
+
+data = cursor.execute("""SELECT * FROM User""")
 for row in data:
     print(row)
+
 
 connection.close()
