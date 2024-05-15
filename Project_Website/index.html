@@ -189,6 +189,16 @@
                 interface and update the screen accordingly. This included pulling data from the database, updating it
                 when feeding/cleaning, turning on the camera when needed, and handling menu navigation.
             </p>
+            <p style="text-align: left;padding: 0px 30px;">
+                A feature we wanted to add as an extra was an emotion detection interaction, where the tamagotchi would
+                play a sound or get happier/sadder depending on the user's emotion. We were able to train an emotion
+                detection model with ~76% accuracy on our local machines. However, we ran into many issues when trying
+                to install the tensorflow and keras libraries on the Raspberry-Pi. The version of tensorflow available
+                for the os architecture was only available with Python 3.7, whereas we had Python 3.9. One solution we
+                found was to convert the model to a TFLite model, as we were able to successfully install TFLite on the
+                Raspberry-Pi. Unfortunately, after many attempts, we could not convert the model. The code and model can
+                be found in the github repository.
+            </p>
             <h3>Hardware</h3>
             <p style="text-align: left;padding: 0px 30px;">
                 We used the PiTFT to show the game screen, the Pi-camera to take photos, and the four GPIO pins on the
@@ -203,45 +213,109 @@
 
         <div style="text-align:center;">
             <h2>Drawings</h2>
-            <p style="text-align: left;padding: 0px 30px;">Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                Vestibulum
-                lorem nulla, consectetur at leo vel, pretium bibendum nisl. Cras blandit quam a enim ultrices, eu
-                convallis enim
-                posuere. Donec eleifend enim sed purus consectetur, vitae cursus lectus varius. Vivamus consectetur
-                felis nec
-                est venenatis posuere. Phasellus vitae aliquet erat. In laoreet lacinia mollis. Quisque iaculis nisl
-                fermentum
-                pharetra lobortis. Donec rhoncus dui sem, ac molestie leo tristique vel. Phasellus in nibh feugiat,
-                fringilla
-                lectus in, elementum magna. Etiam quis dui condimentum, tempus ex in, dapibus est. Cras ut congue augue.
-                Donec
-                ac enim ex. Ut id tristique risus, vel porttitor quam. Sed ultricies enim eu nibh porttitor, vel sodales
-                enim
-                feugiat. Fusce volutpat venenatis magna ac ultrices. Curabitur eget urna ut nulla mattis convallis non
-                eu diam.
+            <p style="text-align: left;padding: 0px 30px;">
+                We illustrated our Tamagotchis, status bars, and tombstone using pixel art.
             </p>
+            <div class="row" style="text-align:center;">
+                <div class="col-md-2" style="font-size:16px">
+                    <img class="img-rounded" src="../images/tama1.png" alt="Generic placeholder image" width="100"
+                        height="100">
+                    <h5>Capz</h5>
+                </div>
+                <div class="col-md-2" style="font-size:16px">
+                    <img class="img-rounded" src="../images/tama2.png" alt="Generic placeholder image" width="100"
+                        height="100">
+                    <h5>Pacmen</h5>
+                </div>
+                <div class="col-md-2" style="font-size:16px">
+                    <img class="img-rounded" src="../images/tama3.png" alt="Generic placeholder image" width="100"
+                        height="100">
+                    <h5>Jaredz</h5>
+                </div>
+                <div class="col-md-2" style="font-size:16px">
+                    <img class="img-rounded" src="../images/tama4.png" alt="Generic placeholder image" width="100"
+                        height="100">
+                    <h5>Bob</h5>
+                </div>
+                <div class="col-md-2" style="font-size:16px">
+                    <img class="img-rounded" src="../images/tama5.png" alt="Generic placeholder image" width="100"
+                        height="100">
+                    <h5>Kin gJuilan</h5>
+                </div>
+                <div class="col-md-2" style="font-size:16px">
+                    <img class="img-rounded" src="../images/tama6.png" alt="Generic placeholder image" width="100"
+                        height="100">
+                    <h5>Jonathon</h5>
+                </div>
+                <div class="col-md-2" style="font-size:16px">
+                    <img class="img-rounded" src="../images/tama7.png" alt="Generic placeholder image" width="100"
+                        height="100">
+                    <h5>Nola</h5>
+                </div>
+                <div class="col-md-2" style="font-size:16px">
+                    <img class="img-rounded" src="../images/tama8.png" alt="Generic placeholder image" width="100"
+                        height="100">
+                    <h5>NYSEG</h5>
+                </div>
+                <div class="col-md-2" style="font-size:16px">
+                    <img class="img-rounded" src="../images/tama9.png" alt="Generic placeholder image" width="100"
+                        height="100">
+                    <h5>Epty</h5>
+                </div>
+                <div class="col-md-2" style="font-size:16px">
+                    <img class="img-rounded" src="../images/tama10.png" alt="Generic placeholder image" width="100"
+                        height="100">
+                    <h5>Penguin</h5>
+                </div>
+                <div class="col-md-2" style="font-size:16px">
+                    <img class="img-rounded" src="../images/tama11.png" alt="Generic placeholder image" width="100"
+                        height="100">
+                    <h5>Fish</h5>
+                </div>
+            </div>
+            <h4>Tamagotchis</h4>
+            <div class="row" style="text-align:center;">
+                <div class="col-md-2" style="font-size:16px">
+                    <img class="img-rounded" src="../images/happy_bar.png" alt="Generic placeholder image" width="50"
+                        height="50">
+                    <h5>Happiness</h5>
+                </div>
+                <div class="col-md-2" style="font-size:16px">
+                    <img class="img-rounded" src="../images/health_bar.png" alt="Generic placeholder image" width="50"
+                        height="50">
+                    <h5>Health</h5>
+                </div>
+                <div class="col-md-2" style="font-size:16px">
+                    <img class="img-rounded" src="../images/hunger_bar.png" alt="Generic placeholder image" width="50"
+                        height="50">
+                    <h5>Hunger</h5>
+                </div>
+                <div class="col-md-2" style="font-size:16px">
+                    <img class="img-rounded" src="../images/pizza.png" alt="Generic placeholder image" width="50"
+                        height="50">
+                    <h5>Pizza</h5>
+                </div>
+                <div class="col-md-2" style="font-size:16px">
+                    <img class="img-rounded" src="../images/tombstone.png" alt="Generic placeholder image" width="100"
+                        height="140">
+                    <h5>Death</h5>
+                </div>
+            </div>
+            <h4>Other Icons</h4>
         </div>
 
         <hr id='testing'>
 
         <div style="text-align:center;">
             <h2>Testing</h2>
-            <p style="text-align: left;padding: 0px 30px;">Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                Vestibulum
-                lorem nulla, consectetur at leo vel, pretium bibendum nisl. Cras blandit quam a enim ultrices, eu
-                convallis enim
-                posuere. Donec eleifend enim sed purus consectetur, vitae cursus lectus varius. Vivamus consectetur
-                felis nec
-                est venenatis posuere. Phasellus vitae aliquet erat. In laoreet lacinia mollis. Quisque iaculis nisl
-                fermentum
-                pharetra lobortis. Donec rhoncus dui sem, ac molestie leo tristique vel. Phasellus in nibh feugiat,
-                fringilla
-                lectus in, elementum magna. Etiam quis dui condimentum, tempus ex in, dapibus est. Cras ut congue augue.
-                Donec
-                ac enim ex. Ut id tristique risus, vel porttitor quam. Sed ultricies enim eu nibh porttitor, vel sodales
-                enim
-                feugiat. Fusce volutpat venenatis magna ac ultrices. Curabitur eget urna ut nulla mattis convallis non
-                eu diam.
+            <p style="text-align: left;padding: 0px 30px;">
+                Our testing strategy was to isolate components/features of our code and get them to work before
+                combining them into the main game code. For facial recognition, we did testing using the camera.py file
+                and a separate testing database, and once it was working, we added the code into game.py and changed the
+                SQLite commands to interact with the main tamagotchi.db. One of our initial concerns was how accurate
+                the model would be, but after testing on 11 people, it only misclassified one person one time. All game
+                functionality testing was done by just running the code and checking print statements if something
+                wasn't working as intended.
             </p>
         </div>
 
@@ -249,22 +323,10 @@
 
         <div style="text-align:center;">
             <h2>Result</h2>
-            <p style="text-align: left;padding: 0px 30px;">Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                Vestibulum
-                lorem nulla, consectetur at leo vel, pretium bibendum nisl. Cras blandit quam a enim ultrices, eu
-                convallis enim
-                posuere. Donec eleifend enim sed purus consectetur, vitae cursus lectus varius. Vivamus consectetur
-                felis nec
-                est venenatis posuere. Phasellus vitae aliquet erat. In laoreet lacinia mollis. Quisque iaculis nisl
-                fermentum
-                pharetra lobortis. Donec rhoncus dui sem, ac molestie leo tristique vel. Phasellus in nibh feugiat,
-                fringilla
-                lectus in, elementum magna. Etiam quis dui condimentum, tempus ex in, dapibus est. Cras ut congue augue.
-                Donec
-                ac enim ex. Ut id tristique risus, vel porttitor quam. Sed ultricies enim eu nibh porttitor, vel sodales
-                enim
-                feugiat. Fusce volutpat venenatis magna ac ultrices. Curabitur eget urna ut nulla mattis convallis non
-                eu diam.
+            <p style="text-align: left;padding: 0px 30px;">
+                For our demo, the cleaning poop feature was not working as intended, and crashed the software. However,
+                after rebooting the Raspberry-Pi, it started to work again, without any change in code. Everything else
+                worked as intended.
             </p>
         </div>
 
@@ -272,21 +334,22 @@
 
         <div class="row" style="text-align:center;">
             <h2>Work Distribution</h2>
+            <p style="text-align: left;padding: 0px 30px;">
+                All work on the project was done together in lab.
+            </p>
             <div style="text-align:center;">
                 <img class="img-rounded" src="pics/group.jpg" alt="Generic placeholder image" style="width:80%;">
                 <h4>Project group picture</h4>
             </div>
             <div class="col-md-6" style="font-size:16px">
                 <img class="img-rounded" src="pics/a.png" alt="Generic placeholder image" width="240" height="240">
-                <h3>Rick</h3>
-                <p class="lead">netid@cornell.edu</p>
-                <p>Designed the overall software architecture (Just being himself).
+                <h3>Lulu</h3>
+                <p class="lead">lh543@cornell.edu</p>
             </div>
             <div class="col-md-6" style="font-size:16px">
                 <img class="img-rounded" src="pics/b.png" alt="Generic placeholder image" width="240" height="240">
-                <h3>Morty</h3>
-                <p class="lead">netid@cornell.edu</p>
-                <p>Tested the overall system.
+                <h3>Sana</h3>
+                <p class="lead">sc2347@cornell.edu</p>
             </div>
         </div>
 
@@ -296,21 +359,17 @@
             <ul>
                 <li>Raspberry Pi $35.00</li>
                 <li>Raspberry Pi Camera V2 $25.00</li>
-                <a href="https://www.adafruit.com/product/1463">
-                    <li>NeoPixel Ring - $9.95</li>
-                </a>
-                <li>LEDs, Resistors and Wires - Provided in lab</li>
             </ul>
-            <h3>Total: $69.95</h3>
+            <h3>Total: $60.00</h3>
         </div>
         <hr>
         <div style="font-size:18px">
             <h2>References</h2>
             <a href="https://picamera.readthedocs.io/">PiCamera Document</a><br>
-            <a href="http://www.micropik.com/PDF/SG90Servo.pdf">Tower Pro Servo Datasheet</a><br>
-            <a href="http://getbootstrap.com/">Bootstrap</a><br>
-            <a href="http://abyz.co.uk/rpi/pigpio/">Pigpio Library</a><br>
             <a href="https://sourceforge.net/p/raspberry-gpio-python/wiki/Home/">R-Pi GPIO Document</a><br>
+
+            <a href="https://www.pixilart.com/draw?ref=home-page">Pixel Art</a><br>
+
 
         </div>
 
@@ -318,12 +377,9 @@
 
         <div class="row">
             <h2>Code Appendix</h2>
-            <pre><code>
-// Hello World.c
-int main(){
-  printf("Hello World.\n");
-}
-              </code></pre>
+            <p style="text-align: left;padding: 0px 30px;">
+                Code can be found on <a href="https://github.com/luluhtutt/Pi-Tamagotchi">Github</a>
+            </p>
         </div>
 
     </div><!-- /.container -->
